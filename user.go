@@ -37,9 +37,23 @@ func (this *User) Offline() {
 	this.UserServer.BroadCast(this, "下线了")
 }
 
+// 发给自己
+func (this *User) SendMy(msg string) {
+	this.C <- msg
+}
+
 // 发送消息
 func (this *User) SendMessage(msg string) {
-	this.UserServer.BroadCast(this, msg)
+	if msg == "why" {
+		this.UserServer.mapLock.Lock()
+		for _, user := range this.UserServer.OnlineMap {
+			str := fmt.Sprintf("%s: 在线", user.Username)
+			this.SendMy(str)
+		}
+		this.UserServer.mapLock.Unlock()
+	} else {
+		this.UserServer.BroadCast(this, msg)
+	}
 }
 
 // 实时从私人消息中得到消息
@@ -47,7 +61,7 @@ func (this *User) ListerMesage() {
 	for {
 		// 阻塞，等待消息
 		msg := <-this.C
-		// 发送消息
+		// 得到消息
 		this.Conn.Write([]byte(msg))
 		//服务端控制台打印
 		fmt.Println(msg)
