@@ -14,14 +14,32 @@ type User struct {
 	C chan string `json:"c,omitempty"`
 	//连接
 	Conn net.Conn `json:"conn,omitempty"`
+	//server
+
+	UserServer *Server
 }
 
 // 用户工厂
-func NewUser(conn net.Conn) *User {
+func NewUser(conn net.Conn, UserServer *Server) *User {
 	s := conn.RemoteAddr().String()
-	u := &User{Username: s, Address: s, C: make(chan string), Conn: conn}
+	u := &User{Username: s, Address: s, C: make(chan string), Conn: conn, UserServer: UserServer}
 	go u.ListerMesage()
 	return u
+}
+
+// 上线功能
+func (this *User) Online() {
+	this.UserServer.BroadCast(this, "上线了")
+}
+
+// 下线功能
+func (this *User) Offline() {
+	this.UserServer.BroadCast(this, "下线了")
+}
+
+// 发送消息
+func (this *User) SendMessage(msg string) {
+	this.UserServer.BroadCast(this, msg)
 }
 
 // 实时从私人消息中得到消息

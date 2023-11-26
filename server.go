@@ -46,26 +46,29 @@ func (this *Server) BroadCast(user *User, msg string) {
 // 连接后的的处理器
 func (this *Server) Handler(conn net.Conn) {
 	fmt.Println("holle world")
-	user := NewUser(conn)
+	user := NewUser(conn, this)
 
 	this.mapLock.Lock()
 	this.OnlineMap[user.Username] = user
 	this.mapLock.Unlock()
 	//广播上线消息
-	this.BroadCast(user, "login success")
+	//this.BroadCast(user, "login success")
+	user.Online()
 	//广播用户的消息
 	Duque := make([]byte, 2048)
 	n, err := conn.Read(Duque)
 	if n == 0 {
 		fmt.Println("用户下线")
-		this.BroadCast(user, "user offline")
+		//this.BroadCast(user, "user offline")
+		user.Offline()
 		return
 	}
 	if err != nil && err != io.EOF {
 		fmt.Println("conn err", err)
 	}
 	msg := string(Duque[:n-1])
-	this.BroadCast(user, msg)
+	//this.BroadCast(user, msg)
+	user.SendMessage(msg)
 	select {}
 
 }
