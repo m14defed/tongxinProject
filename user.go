@@ -64,6 +64,14 @@ func (this *User) SendMessage(msg string) {
 		this.UserServer.OnlineMap[name] = this
 		this.SendMy("改名成功")
 		this.UserServer.BroadCast(this, "改名成功")
+	} else if len(msg) > 3 && msg[:3] == "to|" {
+		name := strings.Split(msg, "|")[1]
+		msg := strings.Split(msg, "|")[2]
+		user := this.UserServer.OnlineMap[name]
+		if user == nil {
+			this.SendMy("你私信的用户不存在")
+		}
+		user.SendMy(msg)
 	} else {
 		this.UserServer.BroadCast(this, msg)
 	}
