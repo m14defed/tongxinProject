@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 )
 
 // 创建一个服务器
@@ -46,6 +47,8 @@ func (this *Server) BroadCast(user *User, msg string) {
 // 连接后的的处理器
 func (this *Server) Handler(conn net.Conn) {
 	fmt.Println("holle world")
+	//检测用户是否活跃
+	isLive := make(chan bool)
 	user := NewUser(conn, this)
 
 	this.mapLock.Lock()
@@ -69,8 +72,19 @@ func (this *Server) Handler(conn net.Conn) {
 	msg := string(Duque[:n-1])
 	//this.BroadCast(user, msg)
 	user.SendMessage(msg)
-	select {}
-
+	isLive <- true
+	for {
+		select {
+		case <-isLive:
+			//触发下面功能，刷新定时器
+		case <-time.After(time.Hour):
+			user.SendMy("timeout")
+			this.BroadCast(user, "timeout")
+			close(user.C)
+			conn.Close()
+			return
+		}
+	}
 }
 
 // 启动服务器

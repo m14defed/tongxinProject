@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net"
+	"strings"
 )
 
 type User struct {
@@ -50,7 +51,19 @@ func (this *User) SendMessage(msg string) {
 			str := fmt.Sprintf("%s: 在线", user.Username)
 			this.SendMy(str)
 		}
+
 		this.UserServer.mapLock.Unlock()
+	} else if len(msg) > 7 && msg[:7] == "rename|" {
+		name := strings.Split(msg, "|")[1]
+		user := this.UserServer.OnlineMap[name]
+		if user != nil {
+			this.SendMy("用户名已存在")
+		}
+		delete(this.UserServer.OnlineMap, this.Username)
+		this.Username = name
+		this.UserServer.OnlineMap[name] = this
+		this.SendMy("改名成功")
+		this.UserServer.BroadCast(this, "改名成功")
 	} else {
 		this.UserServer.BroadCast(this, msg)
 	}
